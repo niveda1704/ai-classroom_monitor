@@ -1,0 +1,51 @@
+# AI Classroom Monitoring Microservice - Requirements
+# Core Dependencies
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+websockets==12.0
+
+# AI/ML Core
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+opencv-python>=4.8.0
+pillow>=10.0.0
+
+# Object Detection
+ultralytics>=8.0.0  # YOLOv8
+
+# Face Recognition
+insightface>=0.7.3
+onnxruntime>=1.16.0  # Use onnxruntime-gpu for GPU support
+
+# Pose Estimation
+mediapipe>=0.10.0
+
+# Gaze Estimation
+# Using MediaPipe face mesh for gaze direction
+
+# Tracking
+# ByteTrack implementation included in the codebase
+
+# Database
+pymongo>=4.6.0
+
+# Utilities
+scipy>=1.11.0
+scikit-learn>=1.3.0
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+
+# Image Processing
+imageio>=2.33.0
+imageio-ffmpeg>=0.4.9  # For video snippet creation
+
+# Async Support
+aiofiles>=23.2.1
+httpx>=0.26.0
+
+# Logging
+loguru>=0.7.2

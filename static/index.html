@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Classroom Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .status-good { background-color: #10b981; }
+        .status-warning { background-color: #f59e0b; }
+        .status-bad { background-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-purple-600 py-4 shadow-lg">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-bold">🎓 AI Classroom Monitor</h1>
+            <p class="text-blue-200">Real-time student engagement & attention tracking</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+        <!-- Status Bar -->
+        <div id="statusBar" class="mb-6 p-4 bg-gray-800 rounded-lg flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div id="statusDot" class="w-3 h-3 rounded-full bg-yellow-500 pulse"></div>
+                <span id="statusText">Click "Start Monitoring" to begin</span>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="startMonitoring()" id="startBtn" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold transition">
+                    ▶️ Start Monitoring
+                </button>
+                <button onclick="stopMonitoring()" id="stopBtn" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-semibold transition" disabled>
+                    ⏹️ Stop
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Video Feed -->
+            <div class="lg:col-span-2 bg-gray-800 rounded-xl overflow-hidden">
+                <div class="p-4 bg-gray-700">
+                    <h2 class="text-xl font-semibold">📹 Live Classroom Feed</h2>
+                </div>
+                <div class="relative">
+                    <video id="videoFeed" autoplay muted playsinline class="w-full"></video>
+                    <canvas id="overlay" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+                    <div id="studentCount" class="absolute top-4 right-4 bg-black/70 px-4 py-2 rounded-lg">
+                        <span class="text-2xl font-bold">0</span>
+                        <span class="text-gray-300"> students</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Panel -->
+            <div class="space-y-6">
+                <!-- Overall Stats -->
+                <div class="bg-gray-800 rounded-xl overflow-hidden">
+                    <div class="p-4 bg-gray-700">
+                        <h2 class="text-xl font-semibold">📊 Class Statistics</h2>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <!-- Attention -->
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>👀 Attention</span>
+                                <span id="attentionValue" class="font-bold">0%</span>
+                            </div>
+                            <div class="h-4 bg-gray-700 rounded-full overflow-hidden">
+                                <div id="attentionBar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Engagement -->
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>💡 Engagement</span>
+                                <span id="engagementValue" class="font-bold">0%</span>
+                            </div>
+                            <div class="h-4 bg-gray-700 rounded-full overflow-hidden">
+                                <div id="engagementBar" class="h-full bg-green-500 transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Drowsiness -->
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>😴 Drowsiness</span>
+                                <span id="drowsinessValue" class="font-bold">0%</span>
+                            </div>
+                            <div class="h-4 bg-gray-700 rounded-full overflow-hidden">
+                                <div id="drowsinessBar" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emotion -->
+                <div class="bg-gray-800 rounded-xl overflow-hidden">
+                    <div class="p-4 bg-gray-700">
+                        <h2 class="text-xl font-semibold">😊 Dominant Emotion</h2>
+                    </div>
+                    <div class="p-6 text-center">
+                        <div id="emotionIcon" class="text-6xl mb-2">😐</div>
+                        <div id="emotionText" class="text-2xl font-bold capitalize">Neutral</div>
+                    </div>
+                </div>
+
+                <!-- Alerts -->
+                <div class="bg-gray-800 rounded-xl overflow-hidden">
+                    <div class="p-4 bg-gray-700">
+                        <h2 class="text-xl font-semibold">⚠️ Alerts</h2>
+                    </div>
+                    <div id="alertsContainer" class="p-4 max-h-48 overflow-y-auto">
+                        <p class="text-gray-500 text-center">No alerts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Chart -->
+        <div class="mt-6 bg-gray-800 rounded-xl overflow-hidden">
+            <div class="p-4 bg-gray-700">
+                <h2 class="text-xl font-semibold">📈 Engagement Timeline</h2>
+            </div>
+            <div class="p-4">
+                <canvas id="timelineChart" height="100"></canvas>
+            </div>
+        </div>
+
+        <!-- Individual Students -->
+        <div class="mt-6 bg-gray-800 rounded-xl overflow-hidden">
+            <div class="p-4 bg-gray-700">
+                <h2 class="text-xl font-semibold">👥 Individual Students</h2>
+            </div>
+            <div id="studentsGrid" class="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <p class="text-gray-500 col-span-full text-center">Start monitoring to see student data</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Configuration
+        const ANALYSIS_INTERVAL = 1500; // 1.5 seconds
+        
+        // State
+        let mediaStream = null;
+        let analysisInterval = null;
+        let timelineChart = null;
+        let timelineData = { attention: [], engagement: [], drowsiness: [] };
+
+        // Emotion icons mapping
+        const emotionIcons = {
+            'happy': '😊',
+            'sad': '😢',
+            'angry': '😠',
+            'fear': '😨',
+            'surprise': '😮',
+            'disgust': '🤢',
+            'neutral': '😐'
+        };
+
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            timelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(20).fill(''),
+                    datasets: [
+                        {
+                            label: 'Attention',
+                            data: Array(20).fill(0),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Engagement',
+                            data: Array(20).fill(0),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#9ca3af' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Start monitoring
+        async function startMonitoring() {
+            try {
+                updateStatus('Requesting camera access...', 'yellow');
+                
+                mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720 },
+                    audio: false 
+                });
+
+                document.getElementById('videoFeed').srcObject = mediaStream;
+                
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                
+                updateStatus('Monitoring active', 'green');
+                
+                // Start analysis loop
+                analysisInterval = setInterval(analyzeFrame, ANALYSIS_INTERVAL);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                updateStatus('Error: ' + error.message, 'red');
+            }
+        }
+
+        // Stop monitoring
+        function stopMonitoring() {
+            if (analysisInterval) {
+                clearInterval(analysisInterval);
+                analysisInterval = null;
+            }
+            
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            
+            document.getElementById('videoFeed').srcObject = null;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            
+            updateStatus('Monitoring stopped', 'yellow');
+        }
+
+        // Analyze frame
+        async function analyzeFrame() {
+            try {
+                const video = document.getElementById('videoFeed');
+                if (!video.videoWidth) return;
+                
+                // Capture frame
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // Send to backend
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageData })
+                });
+                
+                const results = await response.json();
+                updateUI(results);
+                drawOverlay(results);
+                
+            } catch (error) {
+                console.error('Analysis error:', error);
+            }
+        }
+
+        // Update UI with results
+        function updateUI(results) {
+            // Student count
+            document.getElementById('studentCount').innerHTML = 
+                `<span class="text-2xl font-bold">${results.students_detected}</span>
+                 <span class="text-gray-300"> student${results.students_detected !== 1 ? 's' : ''}</span>`;
+            
+            // Stats bars
+            updateStat('attention', results.class_attention);
+            updateStat('engagement', results.class_engagement);
+            updateStat('drowsiness', results.class_drowsiness);
+            
+            // Emotion
+            const emotion = results.dominant_emotion || 'neutral';
+            document.getElementById('emotionIcon').textContent = emotionIcons[emotion] || '😐';
+            document.getElementById('emotionText').textContent = emotion;
+            
+            // Alerts
+            const alertsContainer = document.getElementById('alertsContainer');
+            if (results.alerts && results.alerts.length > 0) {
+                alertsContainer.innerHTML = results.alerts.map(alert => 
+                    `<div class="bg-red-900/50 text-red-200 p-2 rounded mb-2 text-sm">⚠️ ${alert}</div>`
+                ).join('');
+            } else {
+                alertsContainer.innerHTML = '<p class="text-green-400 text-center">✅ All students engaged</p>';
+            }
+            
+            // Individual students
+            const studentsGrid = document.getElementById('studentsGrid');
+            if (results.faces && results.faces.length > 0) {
+                studentsGrid.innerHTML = results.faces.map(face => `
+                    <div class="bg-gray-700 p-3 rounded-lg text-center">
+                        <div class="text-lg font-bold mb-2">Student ${face.id}</div>
+                        <div class="text-sm">
+                            <div class="flex justify-between">
+                                <span>Attention:</span>
+                                <span class="${face.attention > 60 ? 'text-green-400' : face.attention > 40 ? 'text-yellow-400' : 'text-red-400'}">${face.attention}%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Drowsy:</span>
+                                <span class="${face.drowsiness < 30 ? 'text-green-400' : face.drowsiness < 60 ? 'text-yellow-400' : 'text-red-400'}">${face.drowsiness}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Update chart
+            updateChart(results.class_attention, results.class_engagement);
+        }
+
+        function updateStat(name, value) {
+            document.getElementById(`${name}Value`).textContent = `${value}%`;
+            document.getElementById(`${name}Bar`).style.width = `${value}%`;
+        }
+
+        function updateChart(attention, engagement) {
+            if (!timelineChart) return;
+            
+            timelineChart.data.datasets[0].data.shift();
+            timelineChart.data.datasets[0].data.push(attention);
+            
+            timelineChart.data.datasets[1].data.shift();
+            timelineChart.data.datasets[1].data.push(engagement);
+            
+            timelineChart.update('none');
+        }
+
+        function drawOverlay(results) {
+            const video = document.getElementById('videoFeed');
+            const canvas = document.getElementById('overlay');
+            const ctx = canvas.getContext('2d');
+            
+            // Match canvas size to video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (!results.faces) return;
+            
+            results.faces.forEach(face => {
+                const { x, y, w, h } = face.bbox;
+                
+                // Color based on attention
+                const color = face.attention > 60 ? '#10b981' : face.attention > 40 ? '#f59e0b' : '#ef4444';
+                
+                // Draw box
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x, y, w, h);
+                
+                // Draw label
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y - 25, 100, 25);
+                ctx.fillStyle = '#fff';
+                ctx.font = '14px sans-serif';
+                ctx.fillText(`#${face.id} - ${face.attention}%`, x + 5, y - 7);
+            });
+        }
+
+        function updateStatus(message, color) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            dot.className = 'w-3 h-3 rounded-full pulse ';
+            if (color === 'green') dot.className += 'bg-green-500';
+            else if (color === 'red') dot.className += 'bg-red-500';
+            else dot.className += 'bg-yellow-500';
+            
+            text.textContent = message;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            
+            // Check backend
+            fetch('/health')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'running') {
+                        updateStatus('Backend ready - Click Start to begin', 'green');
+                    }
+                })
+                .catch(() => {
+                    updateStatus('Backend not responding - Run: python classroom_monitor.py', 'red');
+                });
+        });
+    </script>
+</body>
+</html>

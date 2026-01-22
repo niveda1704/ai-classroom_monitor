@@ -1,0 +1,7 @@
+# AI Classroom Monitoring System - Requirements
+# Only 4 packages needed!
+
+flask
+flask-cors
+opencv-python
+numpy

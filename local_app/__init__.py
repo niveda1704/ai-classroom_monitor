@@ -1,0 +1,1 @@
+"""Local App module initialization."""

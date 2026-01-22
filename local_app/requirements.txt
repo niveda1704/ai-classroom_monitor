@@ -1,0 +1,22 @@
+# Local App Requirements
+# AI Classroom Monitor - Desktop Version
+
+# GUI Framework
+PyQt6>=6.4.0
+
+# Data handling
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Computer Vision & AI (shared with ai_service)
+opencv-python>=4.8.0
+ultralytics>=8.0.0
+mediapipe>=0.10.0
+insightface>=0.7.0
+onnxruntime>=1.15.0
+
+# Optional: GPU acceleration
+# onnxruntime-gpu>=1.15.0
+
+# Logging
+loguru>=0.7.0
